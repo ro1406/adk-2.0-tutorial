@@ -6,7 +6,7 @@ from .schemas import ProcurementForm
 
 intake_specialist = Agent(
     name="intake_specialist",
-    model="gemini-2.5-flash",
+    model="gemini-3.1-flash-lite",
     mode="task",
     wait_for_output=True,
     output_schema=ProcurementForm,
@@ -32,7 +32,7 @@ _INTERNAL_REVIEW_PREFIX = (
 
 legal_reviewer = Agent(
     name="legal_reviewer",
-    model="gemini-2.5-flash",
+    model="gemini-3.1-flash-lite",
     mode="single_turn",
     instruction=(
         _INTERNAL_REVIEW_PREFIX + "Review this procurement request for legal/compliance risk.\n"
@@ -48,7 +48,7 @@ legal_reviewer = Agent(
 
 security_reviewer = Agent(
     name="security_reviewer",
-    model="gemini-2.5-flash",
+    model="gemini-3.1-flash-lite",
     mode="single_turn",
     instruction=(
         _INTERNAL_REVIEW_PREFIX + "Review security posture for this software request.\n"

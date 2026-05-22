@@ -7,7 +7,7 @@ from .tools import purchase_tool
 
 intake_specialist = Agent(
     name="intake_specialist",
-    model="gemini-2.5-flash",
+    model="gemini-3.1-flash-lite",
     mode="task",
     output_schema=ProcurementForm,
     instruction=(
@@ -30,7 +30,7 @@ _INTERNAL_REVIEW_PREFIX = (
 
 legal_reviewer = Agent(
     name="legal_reviewer",
-    model="gemini-2.5-flash",
+    model="gemini-3.1-flash-lite",
     mode="single_turn",
     instruction=(
         _INTERNAL_REVIEW_PREFIX + "Review this procurement for legal/compliance risk.\n"
@@ -45,11 +45,10 @@ legal_reviewer = Agent(
 
 security_reviewer = Agent(
     name="security_reviewer",
-    model="gemini-2.5-flash",
+    model="gemini-3.1-flash-lite",
     mode="single_turn",
     instruction=(
-        _INTERNAL_REVIEW_PREFIX
-        + "You have NO tools. Do not ask for tools, scans, or external systems. "
+        _INTERNAL_REVIEW_PREFIX + "You have NO tools. Do not ask for tools, scans, or external systems. "
         "Judge only from the request fields below (typical SaaS/business software is fine).\n\n"
         "Software: {software_name?}\n"
         "Cost (AED): {cost?}\n"
@@ -63,14 +62,13 @@ security_reviewer = Agent(
         "'Security: FAIL: [short reason]'."
     ),
     description=(
-        "Security review from request metadata only (no tools). "
-        "Returns Security: PASS or Security: FAIL: reason."
+        "Security review from request metadata only (no tools). " "Returns Security: PASS or Security: FAIL: reason."
     ),
 )
 
 manager_override = Agent(
     name="manager_override",
-    model="gemini-2.5-flash",
+    model="gemini-3.1-flash-lite",
     mode="single_turn",
     instruction=(
         "Approve high-cost purchase for {software_name?} at {cost?} AED. "
@@ -83,7 +81,7 @@ manager_override = Agent(
 
 procurement_coordinator = Agent(
     name="procurement_coordinator",
-    model="gemini-2.5-flash",
+    model="gemini-3.1-flash-lite",
     instruction="""You are the enterprise procurement coordinator.
 
 Workflow:

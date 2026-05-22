@@ -3,13 +3,12 @@
 from google.adk import Agent
 
 from .schemas import ProcurementForm
-from .tools import after_manager_tool_callback, purchase_tool
 
 # Task-mode agent: multi-turn intake until ProcurementForm is complete.
 # Not placed on static graph edges — dispatched via run_intake in routing.py.
 intake_specialist = Agent(
     name="intake_specialist",
-    model="gemini-2.5-flash",
+    model="gemini-3.1-flash-lite",
     mode="task",
     wait_for_output=True,
     output_schema=ProcurementForm,
@@ -36,8 +35,9 @@ _INTERNAL_REVIEW_PREFIX = (
 
 legal_reviewer = Agent(
     name="legal_reviewer",
-    model="gemini-2.5-flash",
+    model="gemini-3.1-flash-lite",
     mode="single_turn",
+    rerun_on_resume=False,
     instruction=(
         _INTERNAL_REVIEW_PREFIX + "Review this procurement request for legal/compliance risk.\n"
         "Software: {software_name?}\n"
@@ -53,8 +53,9 @@ legal_reviewer = Agent(
 
 security_reviewer = Agent(
     name="security_reviewer",
-    model="gemini-2.5-flash",
+    model="gemini-3.1-flash-lite",
     mode="single_turn",
+    rerun_on_resume=False,
     instruction=(
         _INTERNAL_REVIEW_PREFIX + "Review security posture for this software request.\n"
         "Software: {software_name?}\n"
@@ -64,20 +65,4 @@ security_reviewer = Agent(
     ),
     output_key="security_reviewer_output",
     description="Security review.",
-)
-
-manager_override = Agent(
-    name="manager_override",
-    model="gemini-2.5-flash",
-    instruction=(
-        "You are a procurement manager. The request cost is {cost?} AED for "
-        "{software_name?}.\n"
-        "If cost is greater than 500 AED, you MUST call execute_purchase_order with "
-        "the software_name and cost from state. The system will pause for human "
-        "confirmation in the UI before executing.\n"
-        "If the tool is rejected, inform the user briefly."
-    ),
-    tools=[purchase_tool],
-    after_tool_callback=after_manager_tool_callback,
-    description="Manager approval for purchases over 500 AED.",
 )

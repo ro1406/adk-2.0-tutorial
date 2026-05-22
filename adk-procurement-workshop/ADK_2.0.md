@@ -67,8 +67,9 @@ Structured intake → hydrate state → parallel legal + security review → rou
 | `Event(route=...)` routing | `routing.py` `routing_logic` |
 | Parallel fan-out | `(legal_reviewer, security_reviewer)` in `graph.py` |
 | Multi-turn intake bridge | `routing.py` `run_intake` + `ctx.run_node(intake_specialist)` |
-| HITL (tool confirmation) | `tools.py` on static `manager_override` node |
-| Post-manager routes | `routing.py` `route_after_manager` |
+| Manager HITL | `routing.py` `manager_hitl` (`RequestInput`, same semantics as dynamic) |
+| Post-HITL routes | `routing.py` `route_manager_hitl` → `approve` / `reject` edges |
+| Purchase execution | `routing.py` `execute_purchase` + `record_purchase_in_state` |
 
 Intake uses `ctx.run_node` because multi-turn intake agents are not placed on static graph edges in ADK 2.0 GA — see [graph app README](graph_procurement_agent/README.md).
 
@@ -94,10 +95,12 @@ Intake uses `ctx.run_node` because multi-turn intake agents are not placed on st
 
 | | Graph app | Dynamic app |
 |--|-----------|-------------|
-| Mechanism | `manager_override` on a graph edge + `FunctionTool(require_confirmation=True)` | `manager_approval` child yields `RequestInput`; parent `await ctx.run_node(...)` |
-| Why differ | Tool confirmation on a **static** node resumes reliably in the Web UI | Nested `ctx.run_node(Agent)` with confirmation tools can cancel dynamic children on pause |
+| HITL mechanism | `manager_hitl` graph node yields `RequestInput` (Yes/No in chat) | `manager_approval` child node yields `RequestInput` |
+| Approval decision | `route_manager_hitl` → `Event(route="approve"\|"reject")` | `is_approval(response)` in orchestrator `if/else` |
+| Purchase execution | `execute_purchase` graph node on `approve` edge | `await ctx.run_node(execute_purchase_node)` |
+| Teaching contrast | **Where routing lives** — graph edges vs Python orchestrator | Same HITL UX; checkbox `require_confirmation` is in **collaborative** app only |
 
-See [`dynamic_procurement_agent/orchestrator.py`](dynamic_procurement_agent/orchestrator.py) and [`routing.py`](dynamic_procurement_agent/routing.py).
+See [`graph_procurement_agent/routing.py`](graph_procurement_agent/routing.py) and [`dynamic_procurement_agent/orchestrator.py`](dynamic_procurement_agent/orchestrator.py).
 
 ---
 
@@ -123,8 +126,8 @@ No `Workflow` graph in ADK Web UI — you see **agent transfer / delegation** in
 | `ctx.run_node` | Intake bridge | Full pipeline | Via delegation |
 | Parallel fan-out | Edge tuple | `asyncio.gather` | Coordinator-driven |
 | Multi-turn intake | `run_intake` bridge | Inside orchestrator | Coordinator delegates |
-| Tool confirmation HITL | Yes | No | Yes |
-| `RequestInput` HITL | No | Yes | N/A |
+| Tool confirmation HITL | No | No | Yes |
+| `RequestInput` HITL | Yes | Yes | N/A |
 | `MockSQLiteSessionService` | Yes | Yes | No |
 
 ---

@@ -2,16 +2,20 @@
 
 from google.adk import Workflow
 
-from .agents import legal_reviewer, manager_override, security_reviewer
+from .agents import legal_reviewer, security_reviewer
 from .routing import (
     complete_procurement,
+    execute_purchase,
     hydrate_intake_state,
+    manager_hitl,
     notify_rejection,
-    route_after_manager,
+    route_manager_hitl,
     routing_logic,
     run_intake,
 )
 
-
-#! To do in workshop: Create a workflow object with the name "procurement_workflow"
-
+#! To do in workshop: Create procurement_workflow with edges (see reference graph.py):
+#!   START → run_intake → hydrate → (legal, security) → routing_logic
+#!   routing_logic → reject | manager_hitl | complete
+#!   manager_hitl → route_manager_hitl → approve: execute_purchase | reject: notify_rejection
+#!   execute_purchase → complete_procurement

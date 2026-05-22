@@ -1,11 +1,15 @@
 """Routing nodes and task-intake bridge for the graph workflow."""
 
+from typing import Any
+
 from google.adk import Context, Event
+from google.adk.events import RequestInput
 from google.adk.workflow import node
 
 from .agents import intake_specialist
 from .db import MockSQLiteSessionService
 from .schemas import ProcurementForm
+from .tools import record_purchase_in_state
 
 db = MockSQLiteSessionService()
 
@@ -37,6 +41,8 @@ def hydrate_intake_state(ctx: Context, node_input) -> Event:
             "rejection_reason": "",
             "rejection_notified": False,
             "purchase_approved": False,
+            "procurement_complete_notified": False,
+            "manager_routed": False,
         },
         output=node_input,
     )
@@ -59,6 +65,11 @@ def routing_logic(ctx: Context, node_input) -> Event:
     session_id = ctx.session.id
     db.save_state(session_id, ctx.state.to_dict())
 
+    if ctx.state.get("procurement_complete_notified") or ctx.state.get(
+        "purchase_approved"
+    ):
+        return Event(route="complete")
+
     legal = str(ctx.state.get("legal_reviewer_output", ""))
     security = str(ctx.state.get("security_reviewer_output", ""))
     cost = float(ctx.state.get("cost", 0) or 0)
@@ -73,19 +84,66 @@ def routing_logic(ctx: Context, node_input) -> Event:
         )
 
     if cost > 500 and not ctx.state.get("purchase_approved"):
-        return Event(route="manager")
+        if ctx.state.get("manager_routed"):
+            return Event()
+        return Event(state={"manager_routed": True}, route="manager")
 
     return Event(route="complete")
 
 
-def route_after_manager(ctx: Context, node_input) -> Event:
-    """After manager step: complete on approval, loop to intake on rejection."""
-    if ctx.state.get("purchase_approved"):
-        return Event(route="complete")
-    return Event(route="reject")
+def is_approval(response: Any) -> bool:
+    """Parse manager RequestInput response (same as dynamic app)."""
+    if response is None:
+        return False
+    text = str(response).strip().lower()
+    if text in ("yes", "y", "approve", "approved"):
+        return True
+    return text.startswith("yes")
+
+
+@node(rerun_on_resume=False, name="manager_hitl")
+async def manager_hitl(ctx: Context, node_input):
+    """Pause for manager Yes/No via RequestInput (ADK dynamic-style HITL)."""
+    del node_input
+    cost = float(ctx.state.get("cost", 0) or 0)
+    software = ctx.state.get("software_name", "the requested software")
+    yield RequestInput(
+        message=(
+            f"Manager approval required: purchase {software} for {cost:,.2f} AED.\n"
+            "Reply Yes to approve or No to decline."
+        )
+    )
+
+
+manager_hitl.wait_for_output = True
+
+
+def route_manager_hitl(ctx: Context, node_input) -> Event:
+    """Branch on manager Yes/No before purchase execution."""
+    if is_approval(node_input):
+        return Event(route="approve")
+    return Event(
+        state={"rejection_reason": "Manager declined the purchase."},
+        route="reject",
+    )
+
+
+@node(name="execute_purchase")
+def execute_purchase(ctx: Context, node_input) -> str:
+    """Execute purchase after RequestInput approval (writes directly to ctx.state)."""
+    del node_input
+    software = ctx.state.get("software_name", "the requested software")
+    cost = float(ctx.state.get("cost", 0) or 0)
+    return record_purchase_in_state(ctx.state, software, cost)
 
 
 def complete_procurement(ctx: Context, node_input) -> Event:
-    """Terminal node: user-visible completion message."""
+    """Terminal node: user-visible completion message (once per request)."""
+    if ctx.state.get("procurement_complete_notified"):
+        return Event()
+
     software = ctx.state.get("software_name", "the requested software")
-    return Event(message=f"Procurement request for {software} is complete. Thank you!")
+    message = ctx.state.get("manager_message") or (
+        f"Procurement request for {software} is complete. Thank you!"
+    )
+    return Event(message=message, state={"procurement_complete_notified": True})

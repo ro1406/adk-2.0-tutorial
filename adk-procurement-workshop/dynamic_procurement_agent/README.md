@@ -31,7 +31,8 @@ flowchart TD
 |---------|---------------------------|---------------------|
 | Control flow | `graph.py` edges + `Event(route=...)` | `orchestrator.py` `if/else` + `yield`/`return` |
 | Parallel reviews | Edge tuple `(legal, security)` | `asyncio.gather` + `ctx.run_node` |
-| Manager HITL | Static `manager_override` + tool confirmation | `RequestInput` in `manager_approval` child node |
+| Manager HITL | `RequestInput` on `manager_hitl` graph node | `RequestInput` in `manager_approval` child node |
+| Where routing lives | `Event(route=...)` + graph edges | Python `if/else` in orchestrator |
 | Re-intake after deny | Graph edge back to `run_intake` | Next user turn reruns orchestrator; `intake_generation` bumps |
 
 ## Control-flow owner

@@ -23,11 +23,12 @@ flowchart TD
   legal --> route
   security --> route
   route -->|reject| run_intake
-  route -->|manager| manager
+  route -->|manager| hitl[manager_hitl]
   route -->|complete| done
-  manager --> after_manager
-  after_manager -->|approved| done
-  after_manager -->|rejected| run_intake
+  hitl --> branch[route_manager_hitl]
+  branch -->|approve| exec[execute_purchase]
+  branch -->|reject| deny[notify_rejection]
+  exec --> done
 ```
 
 `run_intake` calls `ctx.run_node(intake_specialist)` for multi-turn structured intake (see [ADK_2.0.md](../ADK_2.0.md)).
@@ -39,7 +40,8 @@ flowchart TD
 | Step order and parallelism | `graph.py` `edges` |
 | Reject / manager / complete branches | `routing.py` → `Event(route=...)` |
 | Multi-turn structured intake | `routing.py` `run_intake` + `agents.py` `intake_specialist` |
-| HITL purchase approval | `tools.py` `FunctionTool(require_confirmation=True)` |
+| Manager HITL | `routing.py` `manager_hitl` (`RequestInput`) |
+| Purchase execution | `execute_purchase` + `record_purchase_in_state` |
 | Workshop SQLite snapshot | `routing.py` → `db.py` (not ADK session service) |
 
 ## File map
@@ -48,9 +50,9 @@ flowchart TD
 |------|---------|
 | [`agent.py`](agent.py) | `root_agent` for `adk web` |
 | [`graph.py`](graph.py) | `Workflow` edges only |
-| [`routing.py`](routing.py) | `run_intake`, `hydrate_intake_state`, `routing_logic`, `route_after_manager`, `complete_procurement` |
-| [`agents.py`](agents.py) | LLM agent definitions |
-| [`tools.py`](tools.py) | HITL purchase tool + callbacks |
+| [`routing.py`](routing.py) | `run_intake`, `routing_logic`, `manager_hitl`, `route_manager_hitl`, `execute_purchase`, terminals |
+| [`agents.py`](agents.py) | Intake + reviewer agents |
+| [`tools.py`](tools.py) | `record_purchase_in_state` |
 | [`schemas.py`](schemas.py) | `ProcurementForm` |
 | [`db.py`](db.py) | `MockSQLiteSessionService` demo |
 
@@ -62,7 +64,7 @@ flowchart TD
 - [x] Loop-back on reject — `reject` → `run_intake`
 - [x] `ctx.run_node` bridge for intake — [`routing.py`](routing.py)
 - [x] `output_schema` + `output_key` + `Event(state=...)` — agents + routing
-- [x] Tool confirmation HITL — [`tools.py`](tools.py)
+- [x] `RequestInput` manager HITL — [`routing.py`](routing.py)
 - [x] Terminal node (no outgoing edges) — `complete_procurement`
 
 ## How to run

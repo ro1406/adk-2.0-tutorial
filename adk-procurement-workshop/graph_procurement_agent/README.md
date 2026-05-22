@@ -22,12 +22,13 @@ flowchart TD
   hydrate --> security
   legal --> route
   security --> route
-  route -->|reject| run_intake
-  route -->|manager| manager
-  route -->|complete| done
-  manager --> after_manager
-  after_manager -->|approved| done
-  after_manager -->|rejected| run_intake
+  route -->|reject| deny[notify_rejection]
+  route -->|manager| hitl[manager_hitl]
+  route -->|complete| done[complete_procurement]
+  hitl --> branch[route_manager_hitl]
+  branch -->|approve| exec[execute_purchase]
+  branch -->|reject| deny
+  exec --> done
 ```
 
 `run_intake` calls `ctx.run_node(intake_specialist)` for multi-turn structured intake (see [ADK_2.0.md](../ADK_2.0.md)).
@@ -39,7 +40,8 @@ flowchart TD
 | Step order and parallelism | `graph.py` `edges` |
 | Reject / manager / complete branches | `routing.py` → `Event(route=...)` |
 | Multi-turn structured intake | `routing.py` `run_intake` + `agents.py` `intake_specialist` |
-| HITL purchase approval | `tools.py` `FunctionTool(require_confirmation=True)` |
+| Manager HITL (Yes/No) | `routing.py` `manager_hitl` → `RequestInput` |
+| Purchase execution | `routing.py` `execute_purchase` + `tools.py` `record_purchase_in_state` |
 | Workshop SQLite snapshot | `routing.py` → `db.py` (not ADK session service) |
 
 ## File map
@@ -48,9 +50,9 @@ flowchart TD
 |------|---------|
 | [`agent.py`](agent.py) | `root_agent` for `adk web` |
 | [`graph.py`](graph.py) | `Workflow` edges only |
-| [`routing.py`](routing.py) | `run_intake`, `hydrate_intake_state`, `routing_logic`, `route_after_manager`, `complete_procurement` |
-| [`agents.py`](agents.py) | LLM agent definitions |
-| [`tools.py`](tools.py) | HITL purchase tool + callbacks |
+| [`routing.py`](routing.py) | `run_intake`, `routing_logic`, `manager_hitl`, `route_manager_hitl`, `execute_purchase`, terminals |
+| [`agents.py`](agents.py) | Intake + reviewer LLM agents |
+| [`tools.py`](tools.py) | `record_purchase_in_state` (no tool confirmation on graph path) |
 | [`schemas.py`](schemas.py) | `ProcurementForm` |
 | [`db.py`](db.py) | `MockSQLiteSessionService` demo |
 
@@ -62,7 +64,8 @@ flowchart TD
 - [x] Loop-back on reject — `reject` → `run_intake`
 - [x] `ctx.run_node` bridge for intake — [`routing.py`](routing.py)
 - [x] `output_schema` + `output_key` + `Event(state=...)` — agents + routing
-- [x] Tool confirmation HITL — [`tools.py`](tools.py)
+- [x] `RequestInput` manager HITL — [`routing.py`](routing.py) `manager_hitl`
+- [x] Graph branches on approval — `route_manager_hitl` → `approve` / `reject`
 - [x] Terminal node (no outgoing edges) — `complete_procurement`
 
 ## How to run
@@ -85,8 +88,8 @@ All costs are **yearly AED** (manager approval required above **500 AED**).
 | Happy path (under 500 AED) | "I need Figma for design, 400 AED per year for wireframes." |
 | Legal reject loop | "I need a penetration testing exploit kit, 150 AED per year." |
 | Security fail | (Use a prompt that yields `Security: FAIL` from the security reviewer) |
-| HITL (over 500 AED) | "Enterprise Salesforce license, 12,000 AED annually for the sales team." |
-| Manager deny | Run the HITL path above, then **reject** the tool in the UI |
+| HITL (over 500 AED) | "Enterprise Salesforce license, 12,000 AED annually for the sales team." — reply **Yes** at manager prompt |
+| Manager deny | Same HITL path — reply **No** at manager prompt |
 
 Watch the terminal for `[MockSQLite] Saved state` during routing (optional state snapshot demo).
 

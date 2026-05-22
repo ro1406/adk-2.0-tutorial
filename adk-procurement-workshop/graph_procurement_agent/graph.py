@@ -2,12 +2,14 @@
 
 from google.adk import Workflow
 
-from .agents import legal_reviewer, manager_override, security_reviewer
+from .agents import legal_reviewer, security_reviewer
 from .routing import (
     complete_procurement,
+    execute_purchase,
     hydrate_intake_state,
+    manager_hitl,
     notify_rejection,
-    route_after_manager,
+    route_manager_hitl,
     routing_logic,
     run_intake,
 )
@@ -23,17 +25,18 @@ procurement_workflow = Workflow(
             routing_logic,
             {
                 "reject": notify_rejection,
-                "manager": manager_override,
+                "manager": manager_hitl,
                 "complete": complete_procurement,
             },
         ),
-        (manager_override, route_after_manager),
+        (manager_hitl, route_manager_hitl),
         (
-            route_after_manager,
+            route_manager_hitl,
             {
-                "complete": complete_procurement,
+                "approve": execute_purchase,
                 "reject": notify_rejection,
             },
         ),
+        (execute_purchase, complete_procurement),
     ],
 )
