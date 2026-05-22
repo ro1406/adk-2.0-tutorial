@@ -12,28 +12,6 @@ from .routing import (
     run_intake,
 )
 
-procurement_workflow = Workflow(
-    name="procurement_workflow",
-    edges=[
-        ("START", run_intake),
-        (run_intake, hydrate_intake_state),
-        (hydrate_intake_state, (legal_reviewer, security_reviewer)),
-        ((legal_reviewer, security_reviewer), routing_logic),
-        (
-            routing_logic,
-            {
-                "reject": notify_rejection,
-                "manager": manager_override,
-                "complete": complete_procurement,
-            },
-        ),
-        (manager_override, route_after_manager),
-        (
-            route_after_manager,
-            {
-                "complete": complete_procurement,
-                "reject": notify_rejection,
-            },
-        ),
-    ],
-)
+
+#! To do in workshop: Create a workflow object with the name "procurement_workflow"
+

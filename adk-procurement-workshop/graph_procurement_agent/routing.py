@@ -17,9 +17,7 @@ async def run_intake(ctx: Context, node_input) -> dict:
     mode='task' agents cannot sit on static Workflow edges. See ADK validation:
     use a chat coordinator with task sub-agents, or ctx.run_node from a node.
     """
-    result = await ctx.run_node(
-        intake_specialist, node_input, raise_on_wait=True
-    )
+    result = await ctx.run_node(intake_specialist, node_input, raise_on_wait=True)
     if hasattr(result, "model_dump"):
         return result.model_dump()
     return result
@@ -59,25 +57,20 @@ def notify_rejection(ctx: Context, node_input) -> Event:
 def routing_logic(ctx: Context, node_input) -> Event:
     """Route by legal/security outcome, cost threshold, and approval state."""
     session_id = ctx.session.id
-    db.save_state(session_id, ctx.state.to_dict())
+
+    #! To do in workshop: Save state to database
 
     legal = str(ctx.state.get("legal_reviewer_output", ""))
     security = str(ctx.state.get("security_reviewer_output", ""))
     cost = float(ctx.state.get("cost", 0) or 0)
 
-    if "REJECT" in legal.upper():
-        return Event(state={"rejection_reason": legal}, route="reject")
+    #! To do in workshop: Check for legal agent rejection
 
-    if "FAIL" in security.upper():
-        return Event(
-            state={"rejection_reason": security or "Security review failed."},
-            route="reject",
-        )
+    #! To do in workshop: Check for security agent failure
 
-    if cost > 500 and not ctx.state.get("purchase_approved"):
-        return Event(route="manager")
+    #! To do in workshop: Check for cost threshold and purchase approval state
 
-    return Event(route="complete")
+    #! To do in workshop: If all checks pass, route to complete
 
 
 def route_after_manager(ctx: Context, node_input) -> Event:
