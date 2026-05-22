@@ -1,0 +1,21 @@
+# Editor
+.vscode/
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+.env
+
+# ADK local data
+.adk/
+adk_sessions.db
+**/.adk/
+
+# Instructor-only (not published with the public repo)
+WORKSHOP_GUIDE.md
+**/WORKSHOP_GUIDE.md
+
+# Office documents
+*.docx
+~$*.docx

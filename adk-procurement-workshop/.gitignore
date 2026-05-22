@@ -1,0 +1,11 @@
+.env
+.venv/
+__pycache__/
+*.pyc
+.adk/
+**/.adk/
+adk_sessions.db
+WORKSHOP_GUIDE.md
+*.docx
+~$*.docx
+.vscode/
