@@ -90,6 +90,10 @@ To demo denial: reply **No** at the manager prompt → one rejection message →
 - [../README.md](../README.md)
 - [../ADK_2.0.md](../ADK_2.0.md)
 
+## Workflow diagram
+
+![Dynamic workflow diagram](./Dynamic%20Workflow%20Diagram.png)
+
 ## Author
 
 **Rohan Mitra** — Machine Learning Engineer & Researcher. Google Developer Expert — Cloud AI · [rohanmitra.dev](https://rohanmitra.dev) · [LinkedIn](https://www.linkedin.com/in/rohan-mitra14/)
