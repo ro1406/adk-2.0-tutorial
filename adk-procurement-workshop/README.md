@@ -15,10 +15,10 @@ Three runnable sample apps implement the **same procurement story** using three 
 
 ```mermaid
 flowchart TD
-  q{What do you want to explore?}
-  q -->|Fixed pipeline + visible graph| graph[graph_procurement_agent]
-  q -->|Branches and loops in Python| dynamic[dynamic_procurement_agent]
-  q -->|Coordinator delegates to specialists| collab[collaborative_procurement_agent]
+  appChoice{"What do you want to explore?"}
+  appChoice -->|"Fixed pipeline + visible graph"| graphApp["graph_procurement_agent"]
+  appChoice -->|"Branches and loops in Python"| dynamicApp["dynamic_procurement_agent"]
+  appChoice -->|"Coordinator delegates to specialists"| collaborativeApp["collaborative_procurement_agent"]
 ```
 
 - **Graph:** Best starting point — see the full pipeline as `Workflow` edges in ADK Web UI.

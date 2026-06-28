@@ -6,7 +6,6 @@ Sample projects for learning **Google Agent Development Kit (ADK) 2.0**, built a
 |----------|-------------|
 | [adk-procurement-workshop/README.md](adk-procurement-workshop/README.md) | Setup, three agents, quick start |
 | [adk-procurement-workshop/ADK_2.0.md](adk-procurement-workshop/ADK_2.0.md) | ADK 2.0 concepts mapped to this repo |
-| [adk-procurement-workshop/WORKSHOP_GUIDE.md](adk-procurement-workshop/WORKSHOP_GUIDE.md) | Optional ~60-minute presentation outline |
 
 **Per-agent documentation:**
 
