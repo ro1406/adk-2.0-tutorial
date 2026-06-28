@@ -30,7 +30,7 @@ async def run_intake(ctx: Context, node_input) -> dict:
 run_intake.wait_for_output = True
 
 
-def hydrate_intake_state(ctx: Context, node_input) -> Event:
+def validate_and_save_intake_state(ctx: Context, node_input) -> Event:
     """Merge structured intake output into session state for downstream nodes."""
     form = ProcurementForm.model_validate(node_input)
     return Event(
@@ -65,9 +65,7 @@ def routing_logic(ctx: Context, node_input) -> Event:
     session_id = ctx.session.id
     db.save_state(session_id, ctx.state.to_dict())
 
-    if ctx.state.get("procurement_complete_notified") or ctx.state.get(
-        "purchase_approved"
-    ):
+    if ctx.state.get("procurement_complete_notified") or ctx.state.get("purchase_approved"):
         return Event(route="complete")
 
     legal = str(ctx.state.get("legal_reviewer_output", ""))
@@ -143,7 +141,5 @@ def complete_procurement(ctx: Context, node_input) -> Event:
         return Event()
 
     software = ctx.state.get("software_name", "the requested software")
-    message = ctx.state.get("manager_message") or (
-        f"Procurement request for {software} is complete. Thank you!"
-    )
+    message = ctx.state.get("manager_message") or (f"Procurement request for {software} is complete. Thank you!")
     return Event(message=message, state={"procurement_complete_notified": True})

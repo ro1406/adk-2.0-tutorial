@@ -14,7 +14,7 @@ intake_specialist = Agent(
     output_schema=ProcurementForm,
     instruction=(
         "You are a procurement intake specialist. Gather the software name, "
-        " yearlycost (AED), and business justification from the user. Ask clarifying "
+        " yearly cost (AED), and business justification from the user. Ask clarifying "
         "questions until you have all three fields, then call finish_task with "
         "the structured result. If the user provides a monthly cost, convert it to a yearly cost in AED (multiply by 12 and 1USD = 3.67 AED).\n\n"
         "You are the only agent that talks to the end user.\n\n"

@@ -6,7 +6,7 @@ from .agents import legal_reviewer, security_reviewer
 from .routing import (
     complete_procurement,
     execute_purchase,
-    hydrate_intake_state,
+    validate_and_save_intake_state,
     manager_hitl,
     notify_rejection,
     route_manager_hitl,
@@ -18,8 +18,8 @@ procurement_workflow = Workflow(
     name="procurement_workflow",
     edges=[
         ("START", run_intake),
-        (run_intake, hydrate_intake_state),
-        (hydrate_intake_state, (legal_reviewer, security_reviewer)),
+        (run_intake, validate_and_save_intake_state),
+        (validate_and_save_intake_state, (legal_reviewer, security_reviewer)),
         ((legal_reviewer, security_reviewer), routing_logic),
         (
             routing_logic,
