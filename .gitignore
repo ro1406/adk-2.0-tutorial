@@ -19,3 +19,6 @@ WORKSHOP_GUIDE.md
 # Office documents
 *.docx
 ~$*.docx
+
+.DS_Store
+*.pptx

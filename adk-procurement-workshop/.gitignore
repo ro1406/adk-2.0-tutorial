@@ -9,3 +9,5 @@ WORKSHOP_GUIDE.md
 *.docx
 ~$*.docx
 .vscode/
+.DS_Store
+*.pptx
