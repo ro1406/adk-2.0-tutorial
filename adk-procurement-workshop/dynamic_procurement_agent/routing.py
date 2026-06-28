@@ -36,7 +36,7 @@ async def run_intake(ctx: Context, node_input) -> ProcurementForm:
     return ProcurementForm.model_validate(result)
 
 
-def hydrate_intake_state(ctx: Context, form: ProcurementForm) -> None:
+def validate_and_save_intake_state(ctx: Context, form: ProcurementForm) -> None:
     """Merge intake output into state and reset downstream review flags."""
     for key, value in form.model_dump().items():
         ctx.state[key] = value

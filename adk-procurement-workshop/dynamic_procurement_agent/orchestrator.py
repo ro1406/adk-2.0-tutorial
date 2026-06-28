@@ -7,7 +7,7 @@ from .routing import (
     complete_event,
     evaluate_decision,
     execute_purchase_node,
-    hydrate_intake_state,
+    validate_and_save_intake_state,
     is_approval,
     manager_approval,
     rejection_event,
@@ -19,26 +19,37 @@ from .routing import (
 @node(rerun_on_resume=True, name="procurement_orchestrator")
 async def procurement_orchestrator(ctx: Context, node_input):
     """Single dynamic node: intake → reviews → if/else → RequestInput HITL → complete."""
-    form = await run_intake(ctx, node_input)
-    hydrate_intake_state(ctx, form)
 
+    # Interact with user
+    form = await run_intake(ctx, node_input)
+
+    # Validate and save user input
+    validate_and_save_intake_state(ctx, form)
+
+    # Run reviews in parallel
     await run_reviews_parallel(ctx, form)
 
+    # Evaluate decision from legal and security reviews
     decision = evaluate_decision(ctx)
 
+    # If decision is reject, yield rejection event
     if decision == "reject":
         yield rejection_event(ctx)
         return
 
+    # Elif decision is complete, yield complete event
     if decision == "complete":
         yield complete_event(ctx)
         return
 
+    # Otherwise, it needs manager approval
     response = await ctx.run_node(
         manager_approval,
         form.model_dump(),
         run_id="manager-approval",
     )
+
+    # Manager rejected it
     if not is_approval(response):
         ctx.state["rejection_reason"] = "Manager declined the purchase."
         yield rejection_event(ctx)
