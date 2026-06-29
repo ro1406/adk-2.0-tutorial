@@ -1,3 +1,6 @@
 google-adk==2.0.0
+google-cloud-core
+google-cloud-storage
 pydantic>=2.0.0
 python-dotenv
+python-multipart
